@@ -1,0 +1,28 @@
+/* CSS Document */
+
+ul li, ol li { margin:0;}
+
+.md-taadmin ul li { color: red; margin:0;}
+.md-taadmin:before { 
+	content: "Co-requisites";
+	display: block;
+	font-size: 1.4em;
+	color: red;
+}
+
+.md-features ul li { color: green;}
+.md-features:before { 
+	content: "Features & Fixes";
+	display: block;
+	font-size: 1.4em;
+	color: green;
+}
+
+.deployed { font-weight: normal; font-size: 1em; color: #666; margin-top: -10px;}
+
+.libraries a { 
+	display:block;
+	margin: 0 10px 20px 0;
+	padding: 20px;
+	border: 1px solid red;
+}
