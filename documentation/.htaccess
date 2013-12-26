@@ -3,4 +3,4 @@ RewriteEngine on
 # if the directory or file doesn't exist, redirect to index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . - [L,R=404]
+RewriteRule . - [R=306,L]

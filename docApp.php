@@ -14,21 +14,16 @@ Sample urls :
 
 */
 
-class mkDoc {  // is a singleton class
+class MDS {  // is a singleton class
 
 	const MAIN = "main";
 	const ELEMENT_PREFIX = 'md';
 	
-	// DOM structure for user content
-	const HTML = <<<EOD
-<div id="md-user-header"></div>
-<div id="md-user-contentContainer">
-	<div id="md-user-sidebar"></div>
-	<div id="md-user-content"></div>
-</div>
-<div id="md-user-footer"></div>
-EOD;
-	
+	const ID_HEADER 	= 'md-user-header';
+	const ID_CONTENT 	= 'md-user-content';
+	const ID_SIDEBAR 	= 'md-user-sidebar';
+	const ID_FOOTER 	= 'md-user-footer';
+		
 	public $basePath ='';
 	public $baseUrl ='';
 	public $libraryName = "Docs";
@@ -51,20 +46,14 @@ EOD;
 								'title' => 'Undefined',
 								'author' => array('name'=>'Undefined', 'email'=>''),
 								'css' => array(),
-								'html' => self::HTML,
-								'selectors' => array(
-												'header' => '#md-user-header',
-												'content' => '#md-user-content',
-												'sidebar' => '#md-user-sidebar',
-												'footer' => '#md-user-footer',
-												),
+								'js' => array(),
 								);
 								
 			
 	private static $_app;  // holds the singleton
 	
 	public static function app() {
-		if ( !self::$_app ) self::$_app = new mkDoc;
+		if ( !self::$_app ) self::$_app = new MDS;
 		return self::$_app;
 	}
 	
@@ -174,7 +163,7 @@ EOD;
 	private function homePageHtml() {
 		
 		$html = array();
-		$html[] = '<h1>Document Libraries</h1>';
+		$html[] = '<h1>Markdown Server Document Libraries</h1>';
 		$html[] = '<div id="md-libraries">';
 		foreach ( $this->_config['libraries'] as $name=>$meta )
 			$html[] = '<ul><li><a href="'.$this->baseUrl.'/'.$name.'">'.$name.'</a></li><li>'.$meta['title'].'</li></ul>';
@@ -202,7 +191,10 @@ EOD;
 	}
 	
 	public function test() {
-		$config = new docAsset($this->docBaseUrl.'/_mdConfig.xml');
+		//$config = new docAsset($this->docBaseUrl.'/_mdConfig.xml');
+		
+		$config = new docAsset($this->docBaseUrl.'/xyz.md');
+		
 		print_r($config);
 	}
 	
@@ -214,40 +206,47 @@ class mdPageContent {
 	
 	public $dom, $uri, $found;
 	
-	private $_content, $_path, $_html, $_variables;
+	private $_xpath, $_content, $_path, $_html, $_variables, $_mds;
 	
-	public function __construct($mkDoc) {
-		$this->_path = $mkDoc->docBaseUrl;
-		$this->_content	= new docAsset($this->_path.'/'.$mkDoc->docName.'.md');
+	public function __construct($mds) {
+		$this->_mds = $mds;
+		$this->_path = $mds->docBaseUrl;
+		$this->_content	= new docAsset($this->_path.'/'.$mds->docName.'.md');
 		$this->found = $this->_content->found;
-		$this->_html = $mkDoc->docConfig['html'];
+		$this->_html = $mds->docConfig['html'];
 		$this->uri = $this->_content->uri;
 	}
 	
-	private function load($nodeId, $pageComponent) {
+	private function load($div, $pageComponent) {
+										
+		if ( !$pageComponent->found ) $div->parentNode->removeChild($div);
+		else {
+			
+			$mdString = $pageComponent->payload;
 		
-		$node = $this->dom->getElementById($nodeId);
-		
-		if ( !$pageComponent->found ) {
-			$node->parentNode->removeChild($node);
-			return;
+			$html = \Michelf\MarkdownExtra::defaultTransform($mdString.$this->_variables);
+			
+			$newdoc = new DOMDocument;
+			$newdoc->formatOutput = true;
+			$newdoc->loadHTML('<div class="md-tmp-node">'.$html.'</div>');
+			
+			$newxpath = new DOMXpath($newdoc);	
+					
+			$newnode = $newxpath->query('//div[@class="md-tmp-node"]')->item(0);	
+			$newnode = $this->dom->importNode($newnode,true);
+			
+			$div->appendChild($newnode);
 		}
-		else $mdString = $pageComponent->payload;
-		
-		$html = \Michelf\MarkdownExtra::defaultTransform($mdString.$this->_variables);
-		
-		$newdoc = new DOMDocument;
-		$newdoc->formatOutput = true;
-		
-		$newdoc->loadHTML('<div id="tmpMdNode">'.$html.'</div>');
-		$newnode = $newdoc->getElementById("tmpMdNode");
-		$newnode = $this->dom->importNode($newnode,true);
-		$node->appendChild($newnode);
+	}
+	
+	// removes the extra tags that DOMDoc puts around an html fragment by default
+	private function removeWrapperTags($html)  {
+		return preg_replace('/^<!DOCTYPE.+?>/', '', str_replace( array('<html>', '</html>', '<body>', '</body>'), array('', '', '', ''), $html));	
 	}
 	
 	
 	public function content() { 
-		
+			
 		$variables = new docAsset($this->_path.'/variables.md');
 		$this->_variables = $variables->payload;
 		
@@ -255,21 +254,46 @@ class mdPageContent {
 		$footer		= new docAsset($this->_path.'/footer.md');
 		$sidebar	= new docAsset($this->_path.'/sidebar.md');
 						
-		$this->dom = new DOMDocument($this->_html);
-		$this->dom->validateOnParse = true;
-		$this->dom->loadHTML($this->_html);
+		$dom = $this->dom = new DOMDocument('1.0', 'UTF-8');
+		$dom->validateOnParse = true;
 		
-		$node = $this->dom->getElementById('md-user-contentContainer');
+		$dom->loadHTML('<html></html>');
+						
+		$xpath = $this->_xpath = new DOMXpath($dom);
+		
+		$root = $xpath->query('//html')->item(0);		
+		
+		$headerDiv = $dom->createElement("div");
+		$headerDiv->setAttribute('id','md-user-header');
+		$root->appendChild($headerDiv);
+				
+		$contentContainer = $dom->createElement("div");
+		$contentContainer->setAttribute('id','md-user-contentContainer');
+		$root->appendChild($contentContainer);
+		
+		$sidebarDiv = $dom->createElement("div");
+		$sidebarDiv->setAttribute('id','md-user-sidebar');
+		$contentContainer->appendChild($sidebarDiv);
+		
+		$contentDiv = $dom->createElement("div");
+		$contentDiv->setAttribute('id','md-user-content');
+		$contentContainer->appendChild($contentDiv);
+		
+		$footerDiv = $dom->createElement("div");
+		$footerDiv->setAttribute('id','md-user-footer');
+		$root->appendChild($footerDiv);
+				
 		if ( $sidebar->found ) {
-			$node->setAttribute('class','clearfix');
-			$content = $this->dom->getElementById('md-user-content');
-			$content->setAttribute('class','partial');
+			$contentContainer->setAttribute('class','clearfix');
+			$contentDiv->setAttribute('class','partial');
 		}
-		
-		$this->load('md-user-sidebar', $sidebar);
-		$this->load('md-user-content', $this->_content);
+				
+		$this->load($headerDiv, $header);
+		$this->load($sidebarDiv, $sidebar);
+		$this->load($contentDiv, $this->_content);
+		$this->load($footerDiv, $footer);
 			
-		return $this->dom->saveHTML(); 
+		return $this->removeWrapperTags($dom->saveHTML()); 
 	}
 }
 

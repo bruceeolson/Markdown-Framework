@@ -5,7 +5,8 @@ return array(
 	
 		'markdown' => array(
 					'title' 	=> 'Markdown Server Framework',
-					'uri' 		=> 'http://localhost:8888/docs/documentation',
+					'uri' 		=> 'http://localhost:8888/mds/documentation',
+					//'uri' 		=> 'http://localhost:8888/docs/documentation',
 					),
 					
 		'ui' => array(
