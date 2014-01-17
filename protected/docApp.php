@@ -1,5 +1,7 @@
 <?php
 
+require_once('mdsCurl.php'); 
+
 # Install PSR-0-compatible class autoloader
 spl_autoload_register(function($class){
 	require dirname(__FILE__).'/'.preg_replace('{\\\\|_(?!.*\\\\)}', DIRECTORY_SEPARATOR, ltrim($class, '\\')).'.php';
@@ -78,7 +80,7 @@ class MDS {  // is a singleton class
 		
 		// load the config for this library	from config.xml
     	$config = simplexml_load_file(dirname(__FILE__).'/config.xml');
-		$libraryNode = $config->xpath('//library[@alias="'.$library.'"]');
+		$libraryNode = $config->xpath('//alias[text()="'.$library.'"]/..');
 					
 		if ( $libraryNode ) {
 			$libraryNode = $libraryNode[0];
@@ -155,7 +157,7 @@ class MDS {  // is a singleton class
 		$prefix = '<link rel="stylesheet" type="text/css" href="';
 		$suffix = '"/>';
 				
-		if ( preg_match('/^http.*/',$cssUri) ) { /*  do nothing */ }
+		if ( preg_match('/^(\/\/|http).*/',$cssUri) ) { /*  do nothing */ }
 		elseif ( $linkOwner == 'mds' )  $cssUri = $this->baseUrl.'/css/'.$cssUri;
 		elseif ( $linkOwner == 'user' ) $cssUri = $this->doc->baseUrl.'/'.$cssUri;
 		
@@ -163,27 +165,54 @@ class MDS {  // is a singleton class
 		echo $prefix.$cssUri.$suffix."\n";
 	}
 	
-	public function css() {
+	private function addJSelement($jsUri, $linkOwner='mds') {
 		
-		$useDefault = TRUE;
-		$userCss = array(); // array of user supplied css uri's
+		$prefix = '<script type="text/javascript" src="';
+		$suffix = '"></script>';
+				
+		if ( preg_match('/^(\/\/|http).*/',$jsUri) ) { /*  do nothing */ }
+		elseif ( $linkOwner == 'mds' )  $jsUri = $this->baseUrl.'/js/'.$jsUri;
+		elseif ( $linkOwner == 'user' ) $jsUri = $this->doc->baseUrl.'/'.$jsUri;
+		
+		// send js element to the page
+		echo $prefix.$jsUri.$suffix."\n";
+	}
+	
+	private function getConfigAssets($type) {  // $type = css | js
+		
+		$list = array();
+		$useDefault = TRUE;		
 		
 		// extract user css assets from docConfig
-		$cssUri = isset($this->docConfig['css']['uri']) ? $this->docConfig['css']['uri'] : FALSE;		
-		if ( $cssUri && is_array($cssUri) ) {
-			if ( in_array('no-default', $cssUri) ) $useDefault = FALSE;
-			foreach ( $cssUri as $cssFile ) 
-				if ( $cssFile != 'no-default' ) $userCss[] = $cssFile;
+		$assets = isset($this->docConfig[$type]['uri']) ? $this->docConfig[$type]['uri'] : FALSE;		
+		if ( $assets && is_array($assets) ) {
+			if ( in_array('no-default', $assets) ) $useDefault = FALSE;
+			foreach ( $assets as $filepath ) 
+				if ( $filepath != 'no-default' ) $list[] = $filepath;
 		}
-		elseif ( $cssUri ) $userCss[] = $cssUri;
+		elseif ( $assets ) $list[] = $assets;
+		
+		return array('useDefault'=>$useDefault, 'assets'=>$list);
+	}
+	
+	public function css() {
+		$settings = $this->getConfigAssets('css');
+		$useDefault = $settings['useDefault'];
+		$cssAssets = $settings['assets'];
 		
 		// now insert the CSS in the page
 		$this->addCSSelement('http://yandex.st/highlightjs/7.5/styles/default.min.css');
-		foreach ( $userCss as $cssUri ) $this->addCSSelement($cssUri, 'user');
+		foreach ( $cssAssets as $cssUri ) $this->addCSSelement($cssUri, 'user');
 		if ( $useDefault ) {
 			$this->addCSSelement('github.css');
 		}
 		$this->addCSSelement('main.css');
+	}
+	
+	public function js() {
+		$settings = $this->getConfigAssets('js');
+		$jsAssets = $settings['assets'];
+		foreach ( $jsAssets as $jsUri ) $this->addJSelement($jsUri, 'user');
 	}
 	
 	private function homePageHtml() {
@@ -194,17 +223,21 @@ class MDS {  // is a singleton class
 				
 		$html = array();
 		$html[] = '<h1>Markdown Server Libraries</h1>';
-		$html[] = '<div id="md-libraries">';
+		$html[] = '<table id="md-libraries">';
+		$html[] = '<tr><th>Alias</th><th>Title</th><th>Owner</th><th>Url</th><th></th><th></th></tr>'; 
 		
 		if ( $libraries )
 			foreach ( $libraries as $library ) {
-				$html[] = '<ul>';
-				$html[] = '<li><a href="'.$this->baseUrl.'/'.$library['alias'].'">'.$library['alias'].'</a></li>';
-				$html[] = '<li>'.$library->title.'</li>';
-				$html[] = '<li>'.$library->url.'</li>';
-				$html[] = '</ul>';
+				$html[] = '<tr>';
+				$html[] = '<td><a href="'.$this->baseUrl.'/'.$library->alias.'">'.$library->alias.'</a></td>';
+				$html[] = '<td>'.$library->title.'</td>';
+				$html[] = '<td>'.$library->owner.'</td>';
+				$html[] = '<td>'.$library->url.'</td>';
+				$html[] = '<td><a href="'.$this->baseUrl.'/admin/update/'.$library->alias.'">Edit</a></td>';
+				$html[] = '<td><a href="'.$this->baseUrl.'/admin/delete/'.$library->alias.'">Delete</a></td>';
+				$html[] = '</tr>';
 			}
-		$html[] = '</div>';
+		$html[] = '</table>';
 		return implode("\n",$html);
 	}
 	
@@ -214,11 +247,11 @@ class MDS {  // is a singleton class
 		$html = array();
 		$html[] = '<ul class="partialBlock">';
 		$html[] = '<li>Markdown Server</li>';
-		$html[] = '<li><a href="'.$this->baseUrl.'/register'.'">Add Library</a></li>';
+		$html[] = '<li><a href="'.$this->baseUrl.'/admin/create'.'">Add Library</a></li>';
 		
 		if ( $this->doc ) {
-			$html[] = '<li>Library => '.$this->libraryName.'</li>';
-			$html[] = '<li><a href="'.$this->baseUrl.'">Libraries</a></li>';
+			$html[] = '<li>Current Library => '.$this->libraryName.'</li>';
+			$html[] = '<li><a href="'.$this->baseUrl.'">MDS Libraries</a></li>';
 		}
 			
 		if ( $this->_library && $this->doc && ( $this->doc->folder || ($this->doc->name && !isset($_GET['showFolder']))) ) 
@@ -231,7 +264,7 @@ class MDS {  // is a singleton class
 		//$html[] = '<li>'.$config['author']['name'].'</li>';
 		if ( $this->doc && $this->doc->name && !isset($_GET['showFolder']) ) {
 			$href = $this->doc->baseUrl.'/'.$this->doc->name.'.md';
-			$html[] = '<li><a href="'.$href.'">Raw Document</a></li>';
+			$html[] = '<li><a href="'.$href.'" title="'.$href.'">Raw Document</a></li>';
 		}
 		$html[] = '</ul>';
 		echo implode("\n",$html);
@@ -430,7 +463,5 @@ class docAssets {
 		return implode("\n",$html);
 	}
 }
-
-include 'mdsCurl.php';
 
 
