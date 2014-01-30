@@ -31,11 +31,16 @@ else $form = mdsAdmin::app()->form;
     <input type="hidden" name="Register[id]" value="<?php echo $form->id;?>" />
     
 	<table>
+		<tr>
+        	<td style="text-align:right;"><label>Url to library folder</label></td>
+        	<td><input type="text" name="Register[url]" size="50" value="<?php echo $form->url;?>"/></td>
+        </tr>
+        
     	<tr>
         	<td style="text-align:right;"><label style="text-align:right;">Alias <br/>(single alphanumeric word)</label></td>
         	<td><input type="text" name="Register[alias]" size="50" value="<?php echo $form->alias;?>"/></td>
         </tr>
-    
+            
 		<tr>
         	<td style="text-align:right;"><label>Description</label></td>
         	<td><input type="text" name="Register[title]" size="50" value="<?php echo $form->title;?>" /></td>
@@ -46,10 +51,6 @@ else $form = mdsAdmin::app()->form;
         	<td><input type="text" name="Register[owner]" size="50" value="<?php echo $form->owner;?>" /></td>
     	</tr>
     
-		<tr>
-        	<td style="text-align:right;"><label>Url to library folder</label></td>
-        	<td><input type="text" name="Register[url]" size="50" value="<?php echo $form->url;?>"/></td>
-        </tr>
     </table>
     
     <br/>

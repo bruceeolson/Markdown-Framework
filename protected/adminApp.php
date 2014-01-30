@@ -111,7 +111,8 @@ class mdsLibraries {
 	
 	public function __construct() {
 		
-		$fileConfigXML = $this->_configFilePath = dirname(__FILE__).'/config.xml';
+		//$fileConfigXML = $this->_configFilePath = dirname(__FILE__).'/config.xml';
+		$fileConfigXML = $this->_configFilePath = MDS_LIBRARIES_XML;
 		
 		// add library to config.xml if it doesn't already exist
 		$config = $this->dom = new DOMDocument('1.0', 'UTF-8');
@@ -225,13 +226,13 @@ class mdsRegistrationForm {
 	private function validate() {
 		
 		$validId = preg_match('/(^$|^\d{10}$)/',$this->id);  // a 10-digit timestamp
-		$validAlias = preg_match('/^(\w|\.|-)+$/',$this->alias);  // single word
+		$validAlias = preg_match('/^[a-z0-9-]+$/',$this->alias);  // single word
 		$validTitle = preg_match('/(\b(\w|\.|-)+\b)+/',$this->title);  // one or more words
 		$validOwner = preg_match('/(\b(\w|\.|-)+\b)+/',$this->owner);  // one or more words
 		$validUrl = (bool)parse_url($this->url);
 		
 		if ( !$validId ) $this->addError('Invalid id');
-		if ( !$validAlias ) $this->addError('Invalid alias');
+		if ( !$validAlias ) $this->addError('Invalid alias : lowercase alphanumeric, dashes allowed');
 		if ( !$validTitle ) $this->addError('Invalid title');
 		if ( !$validOwner ) $this->addError('Invalid owner');
 		if ( !$validUrl ) $this->addError('Invalid url');

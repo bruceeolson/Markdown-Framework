@@ -1,1 +1,6 @@
 /* CSS Document */
+h1.mds { margin: 0 0 20px; padding:10px; line-height:1; background-color: #ddd; }
+#ui-toc ul { list-style:none; margin:0; padding:0;}
+#ui-toc ul li { margin:0;}
+#ui-toc a { text-decoration:none;}
+

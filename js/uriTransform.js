@@ -24,7 +24,7 @@ $(function() {
 			, hashInCurrentDoc = href.match(/^#.*/)
 			;
 						
-		if ( isMDfile ) $(this).attr('href',mdsLinkPath+'/'+filename);
+		if ( isMDfile ) $(this).attr('href',mdsLinkPath+'/'+filename+'.md');
 		else if ( isDoc ) $(this).attr('href',absolutePath+'/'+href);
 		else if ( hasHash && !hashInCurrentDoc ) $(this).attr('href',mdsLinkPath+hasHash[1]);
 	});

@@ -1,13 +1,11 @@
 <?php
+
+// comment out this line if you don't want to see PHP errors
 if (!ini_get('display_errors')) ini_set('display_errors', 1);
 
-// parse the url to figure out which app to load
-$tokens = explode('/',$_SERVER['REQUEST_URI']);
-array_shift($tokens);  // remove first blank token 
-array_shift($tokens); // remove app dir name ( e.g. mds )
+// modify the path to your mdsLibraries.xml file if necessary
+define('MDS_LIBRARIES_XML',dirname(__FILE__).'/../mdsLibraries.xml');
 
-$app = count($tokens) ? array_shift($tokens) : FALSE;
+require_once('protected/main.php');
 
-if ( $app == 'admin' ) require_once('protected/viewAdmin.php');
-else require_once('protected/viewDocs.php');
 ?>

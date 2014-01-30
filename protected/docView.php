@@ -28,7 +28,7 @@ require_once('docApp.php');
 <div id="md-pageContainer">
     <div id="md-header"><?php MDS::app()->mdHeader();?></div>
     <div id="md-content" class="partialBlock clearfix">
-        <?php echo MDS::app()->html(); ?>
+        <?php echo MDS::app()->content(); ?>
         <!--  MDS::app()->html() returns this structure
         <div id="md-user-header"></div>
         <div id="md-user-contentContainer">
@@ -38,7 +38,7 @@ require_once('docApp.php');
         <div id="md-user-footer"></div>
         -->
     </div>
-    <div id="md-footer"><div class="partialBlock"><p>MD footer</p></div></div>
+    <div id="md-footer"><div class="partialBlock"><p>Markdown Server <?php echo MDS_VERSION;?></p></div></div>
 </div> 
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>

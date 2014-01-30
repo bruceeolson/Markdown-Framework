@@ -1,5 +1,7 @@
 <?php
 
+use \Exception;
+
 require_once('mdsCurl.php'); 
 
 # Install PSR-0-compatible class autoloader
@@ -19,8 +21,9 @@ Sample urls :
 .../docs
 .../docs/ui
 .../docs/ui/releaseNotes
+.../docs/ui/releaseNotes/main.md
 .../docs/ui/framework
-.../docs/ui/framework/main
+.../docs/ui/framework/main.md
 
 */
 
@@ -32,6 +35,8 @@ class MDS {  // is a singleton class
 	const ID_CONTENT 	= 'md-user-content';
 	const ID_SIDEBAR 	= 'md-user-sidebar';
 	const ID_FOOTER 	= 'md-user-footer';
+	
+	private static $_configFile;  // passed in on init()
 		
 	public $basePath ='';
 	public $baseUrl ='';
@@ -46,15 +51,21 @@ class MDS {  // is a singleton class
 	private $_config;				// library config array
 	private $_library;
 	private $_isLibraryFolder;
+	public $_mdsConfig;
+	
+	private $_defaultMDSconfig = array(
+					'title' => 'Markdown Libraries',
+					'allowAddLibrary' => TRUE,
+					'configFound' => FALSE,
+	);
 
 	private $_defaultDocConfig = array(
-								'title' => 'Undefined',
-								'author' => array('name'=>'Undefined', 'email'=>''),
-								'css' => array('css/github.css'),
-								'js' => array(),
-								);
-								
-			
+										'defaultDoc' => 'main.md',
+										'showToolbar' => 'yes',
+										'css' => array('css/github.css'),
+										'js' => array(),
+	);
+				
 	private static $_app;  // holds the singleton
 	
 	public static function app() {
@@ -78,10 +89,29 @@ class MDS {  // is a singleton class
 					
 		$library = array_shift($tokens);
 		
-		// load the config for this library	from config.xml
-    	$config = simplexml_load_file(dirname(__FILE__).'/config.xml');
-		$libraryNode = $config->xpath('//alias[text()="'.$library.'"]/..');
-					
+		// load the config for this library
+		// the value for MDS_LIBRARIES_XML is set in index.php
+    	$config = simplexml_load_file(MDS_LIBRARIES_XML);
+		if ( $config ) {
+			$mdsConfig = $config->xpath('//config');
+			if ( $mdsConfig ) {		
+				$json = json_encode($mdsConfig[0]);
+				$mdsConfig = json_decode($json,TRUE);
+				$this->_mdsConfig = array_merge($this->_defaultMDSconfig, $mdsConfig);
+				$this->_mdsConfig['configFound'] = TRUE;
+			}
+			else $this->_mdsConfig = $this->_defaultMDSconfig;
+			$libraryNode = $config->xpath('//alias[text()="'.$library.'"]/..');
+		} 
+		else {
+			$this->_mdsConfig = $this->_defaultMDSconfig;
+			$libraryNode = NULL;
+		}
+		
+		// change allowAddLibrary from yes/no string to boolean
+		$this->_mdsConfig['allowAddLibrary'] = strtolower($this->_mdsConfig['allowAddLibrary']) == "yes" ? TRUE : FALSE;
+				
+		// look for this library in the config	
 		if ( $libraryNode ) {
 			$libraryNode = $libraryNode[0];
 			$uri = $libraryNode->xpath('./url');
@@ -110,7 +140,6 @@ class MDS {  // is a singleton class
 		
 		$this->docTokens = $docTokens;
 		
-			
 		if ( count($docTokens) > 2 ) {
 			// invalid url
 		}
@@ -118,10 +147,9 @@ class MDS {  // is a singleton class
 			$docFolder = $docTokens[0];
 			$docName = $docTokens[1];
 		}
-		elseif ( count($docTokens) == 1 ) {  // either a .md file OR a folder
+		elseif ( count($docTokens) == 1 ) {  // token is either a .md file OR a folder
 			$docName = $docTokens[0];
-			$test = new docAsset($this->_library['uri'].'/'.$docName.'.md');
-			if ( !$test->found ) {
+			if ( !preg_match('/.+\.md$/',$docName) ) {  // token is a folder
 				$docFolder = $docName;
 				$docName = NULL;
 			}
@@ -129,17 +157,14 @@ class MDS {  // is a singleton class
 		elseif ( count($docTokens) == 0 ) $this->_isLibraryFolder = TRUE;
 		
 		$this->mdsLinkPath = $this->baseUrl.'/'.$this->libraryName;
-		if ( $docFolder ) $this->mdsLinkPath .= '/'.$docFolder;
+		if ( $docFolder !== NULL ) $this->mdsLinkPath .= '/'.$docFolder;
 		
 						
 		// initialize the doc property with a docAssets object
 		$this->doc = new docAssets($this->libraryName, $this->_library['uri'], $docFolder, $docName);
 		
 		$this->docBaseAbsolutePath = $this->doc->baseUrl;
-		
-		$this->pageTitle = $this->libraryName.':'.$this->doc->folder.':'.$this->doc->name;
-		
-										
+												
 		// initialize the config array
 		if ( $this->doc->exists('_config.xml')  ) {
 			$configXML = simplexml_load_string($this->doc->content('_config.xml'));
@@ -148,6 +173,15 @@ class MDS {  // is a singleton class
 			$this->docConfig = array_merge($this->_defaultDocConfig, $userConfig);		
 		}
 		else $this->docConfig = $this->_defaultDocConfig;
+		
+		// make sure the defaultDoc has an .md extension
+		if ( !preg_match('/.+\.md$/',$this->docConfig['defaultDoc']) ) $this->docConfig['defaultDoc'] .= '.md';
+		
+		// if no file specified and the defaultDoc file exists then use it
+		if ( !$this->doc->name && in_array($this->docConfig['defaultDoc'],$this->doc->mdFiles) )
+			$this->doc->name = $this->docConfig['defaultDoc'];		
+			
+		$this->pageTitle = $this->libraryName.':'.$this->doc->folder.':'.$this->doc->name;
 				
 	}  // initLibrary()
 	
@@ -217,12 +251,12 @@ class MDS {  // is a singleton class
 	
 	private function homePageHtml() {
 
-		$configXML = simplexml_load_file(dirname(__FILE__).'/config.xml');
+		$configXML = simplexml_load_file(MDS_LIBRARIES_XML);
 		
 		$libraries = $configXML->xpath('//library');
 				
 		$html = array();
-		$html[] = '<h1>Markdown Server Libraries</h1>';
+		$html[] = '<h1>'.$this->_mdsConfig['title'].'</h1>';
 		$html[] = '<table id="md-libraries">';
 		$html[] = '<tr><th>Alias</th><th>Title</th><th>Owner</th><th>Url</th><th></th><th></th></tr>'; 
 		
@@ -243,27 +277,34 @@ class MDS {  // is a singleton class
 	
 	public function mdHeader() {
 		
+		if ( preg_match('/[nN][oO]/',$this->docConfig['showToolbar']) ) return;
+		
 		$config = $this->docConfig;
 		$html = array();
 		$html[] = '<ul class="partialBlock">';
-		$html[] = '<li>Markdown Server</li>';
-		$html[] = '<li><a href="'.$this->baseUrl.'/admin/create'.'">Add Library</a></li>';
 		
-		if ( $this->doc ) {
-			$html[] = '<li>Current Library => '.$this->libraryName.'</li>';
-			$html[] = '<li><a href="'.$this->baseUrl.'">MDS Libraries</a></li>';
-		}
-			
-		if ( $this->_library && $this->doc && ( $this->doc->folder || ($this->doc->name && !isset($_GET['showFolder']))) ) 
-			$html[] = '<li><a href="'.$this->baseUrl.'/'.$this->libraryName.'?showFolder=1">This Library</a></li>';
-			
-		if ( $this->_library && $this->doc && $this->doc->folder && $this->doc->name ) 
-			$html[] = '<li><a href="'.$this->baseUrl.'/'.$this->libraryName.'/'.$this->doc->folder.'?showFolder=1">This Folder</a></li>';
+		if ( $this->_mdsConfig['allowAddLibrary'] )
+			$html[] = '<li><a href="'.$this->baseUrl.'/admin/create'.'">Add Library</a></li>';
+
+		if ( $this->_library )
+			$html[] = '<li><a href="'.$this->baseUrl.'">Libraries</a></li>';
+		
+		if ( $this->doc )
+			$html[] = '<li>Current Library => <a href="'.$this->baseUrl.'/'.$this->libraryName.'">'.$this->libraryName.'</a></li>';
+		
+		// add a link to display the book-set for the current folder
+		if ( isset($_GET['showFolder']) ) { /*  do nothing because we are showing the book-set */ }
+		elseif ( $this->_library && $this->doc && $this->doc->folder && $this->doc->name ) 
+			$html[] = '<li><a href="'.$this->baseUrl.'/'.$this->libraryName.'/'.$this->doc->folder.'?showFolder=1">Current book-set</a></li>';
+		elseif ( $this->_library && $this->doc && !$this->doc->folder && $this->doc->name ) 
+			$html[] = '<li><a href="'.$this->baseUrl.'/'.$this->libraryName.'?showFolder=1">Current book-set</a></li>';
+		else { /*  do nothing */ }
+		
 						
 		//$html[] = '<li>'.$config['title'].'</li>';
 		//$html[] = '<li>'.$config['author']['name'].'</li>';
 		if ( $this->doc && $this->doc->name && !isset($_GET['showFolder']) ) {
-			$href = $this->doc->baseUrl.'/'.$this->doc->name.'.md';
+			$href = $this->doc->baseUrl.'/'.$this->doc->name;
 			$html[] = '<li><a href="'.$href.'" title="'.$href.'">Raw Document</a></li>';
 		}
 		$html[] = '</ul>';
@@ -333,20 +374,20 @@ class MDS {  // is a singleton class
 				
 		$this->loadAsset($headerDiv,  $this->doc->content('_header.md'));
 		$this->loadAsset($sidebarDiv, $this->doc->content('_sidebar.md'));
-		$this->loadAsset($contentDiv, $this->doc->content($this->doc->name.'.md'));
+		$this->loadAsset($contentDiv, $this->doc->content($this->doc->name));
 		$this->loadAsset($footerDiv,  $this->doc->content('_footer.md'));
 			
 		return $this->removeWrapperTags($dom->saveHTML()); 
 	}
 	
 
-	public function html() {
+	public function content() {
 		
-		if ( !$this->_library ) return $this->homePageHtml();
-				
-		if ( isset($_GET['showFolder']) ) return $this->doc->htmlMdFiles();
+		if ( !$this->_mdsConfig['configFound'] ) return '<p>ERROR : MDS_LIBRARIES_XML in index.php contains path to invalid or missing .xml config file.</p>';
+		elseif ( !$this->_library ) return $this->homePageHtml();
+		elseif ( isset($_GET['showFolder']) ) return $this->doc->htmlMdFiles();
 		
-		$docFilename = $this->doc->name.'.md';
+		$docFilename = $this->doc->name;
 		
 		if ( !$this->doc->name ) return $this->doc->htmlMdFiles();
 		elseif ( !$this->doc->exists($docFilename) ) return '<p>'.$this->doc->baseUrl.'/'.$docFilename.' not found.</p>';
@@ -372,15 +413,13 @@ class docAssets {
 	
 	public $mdFiles = array();
 	public $mdFolders = array();
-	
-	public $defaultDocName;
-	
+		
 	private $mdsAssets = array(
-									'_header.md',
-									'_footer.md',
-									'_sidebar.md',
-									'_variables.md',
-									'_config.xml'
+								'_header.md',
+								'_footer.md',
+								'_sidebar.md',
+								'_variables.md',
+								'_config.xml'
 	);
 	
 	public function __construct($libraryName, $libraryUrl, $docFolder, $docName) {
@@ -395,7 +434,6 @@ class docAssets {
 		
 		$this->name = $docName;
 		
-				
 		$this->dom = new DOMDocument('1.0', 'UTF-8');
 		$this->dom->validateOnParse = true;
 		$this->dom->loadHTML('<html/>');
@@ -419,11 +457,11 @@ class docAssets {
 			$filename = trim($item->getAttribute('href'));
 			$this->files[] = $filename;
 			
-			if ( preg_match('/.*\.md$/',$filename) && !in_array($filename, $this->mdsAssets) ) $this->mdFiles[] = substr($filename,0,-3);
+			if ( preg_match('/.*\.md$/',$filename) && !in_array($filename, $this->mdsAssets) ) $this->mdFiles[] = $filename;
 			if ( preg_match('/.+\/$/',$filename) ) $this->mdFolders[] = substr($filename,0,-1);
 		}
 		
-		// if there is only one NON MDS .md file then assign to defaultDocName
+		// if there is only one NON MDS .md file then assign it to name
 		if ( count($this->mdFiles) == 1 ) $this->name = $this->mdFiles[0];
 		
 		$this->variables = $this->content('_variables.md');
@@ -449,7 +487,7 @@ class docAssets {
 		
 		// list of .md files
 		foreach ( $this->mdFiles as $docName )
-			$html[] = '<li><a href="'.MDS::app()->baseUrl.'/'.MDS::app()->libraryName.'/'.$this->folder.'/'.$docName.'">'.$docName.'.md</a></li>';
+			$html[] = '<li><a href="'.MDS::app()->baseUrl.'/'.MDS::app()->libraryName.'/'.$this->folder.'/'.$docName.'">'.$docName.'</a></li>';
 
 		// list of folders
 		foreach ( $this->mdFolders as $folder )
