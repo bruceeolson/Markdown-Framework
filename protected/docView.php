@@ -6,7 +6,7 @@ header('Content-Type: text/html; charset=utf-8');
 require_once('docApp.php');
 ?>
 <!DOCTYPE html>
-<html data-json='{"mdsLinkPath":"<?php echo MDS::app()->mdsLinkPath;?>", "absolutePath":"<?php echo MDS::app()->docBaseAbsolutePath;?>"}'>
+<html data-json='{"mdsLinkPath":"<?php echo MDS::app()->mdsLinkPath;?>", "absolutePath":"<?php echo MDS::app()->rawBooksetUrl;?>"}'>
 <head>
     <title><?php echo MDS::app()->pageTitle; ?></title>
     <?php MDS::app()->css();?>
@@ -16,7 +16,6 @@ require_once('docApp.php');
 <pre>
 	<?php 
 	//print_r(MDS::app()->properties());
-	//print_r(MDS::app()->doc);
 	//print_r($_SERVER);
 	//print_r(MDS::app()->docConfig);
 	//print_r(MDS::app()); 

@@ -3,6 +3,6 @@
 	<defaultDoc>overview</defaultDoc>
 	<showToolbar>yes</showToolbar>
 	<css>
-		<uri>style.css</uri>
+		<uri>css/style.css</uri>
 	</css>
 </mdConfig>

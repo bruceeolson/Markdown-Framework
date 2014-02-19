@@ -29,6 +29,16 @@ $(function() {
 		else if ( hasHash && !hashInCurrentDoc ) $(this).attr('href',mdsLinkPath+hasHash[1]);
 	});
 	
-	// modify relatvie <img> paths
-	
+	// modify relative img nodes
+	$('#md-content img').each(function() {
+		var   src = $(this).attr('src') ? $(this).attr('src') : false
+			, isAbsoluteLink = src ? src.match(/^(\/|http).*/) : false
+			;
+			
+		if ( !src || isAbsoluteLink ) return;  // do nothing
+					
+		$(this).attr('src',absolutePath+'/'+src);		
+						
+	})
+		
 });
