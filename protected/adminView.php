@@ -55,7 +55,7 @@ else $form = mdsAdmin::app()->form;
     
     <br/>
     <input type="submit" value="Submit" />&nbsp;&nbsp;
-    <input type="button" onclick="window.location.href='../'" value="Cancel" />
+    <input type="button" onclick="window.location.href='../../'" value="Cancel" />
     
 </form>
 </body>

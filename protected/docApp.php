@@ -1,7 +1,5 @@
 <?php
 
-require_once('mdsCurl.php'); 
-
 # Install PSR-0-compatible class autoloader
 spl_autoload_register(function($class){
 	require dirname(__FILE__).'/'.preg_replace('{\\\\|_(?!.*\\\\)}', DIRECTORY_SEPARATOR, ltrim($class, '\\')).'.php';
@@ -80,21 +78,10 @@ class MDS {  // is a singleton class
 	private function __construct() {
 		
 		$this->basePath = dirname(__FILE__);
-		
-		if ( isset($_SERVER['REDIRECT_URL']) )
-			$tokens = explode('/',$_SERVER['REDIRECT_URL']);
-		else {
-			$tokens = explode('/',$_SERVER['PHP_SELF']);
-			array_pop($tokens);  // remove the index.php
-		}
+		$this->baseUrl = MDS_CLIENT_BASE_URL;
 				
-		array_shift($tokens);  // remove the empty token from the beginning of the array
-		$this->baseUrl = '/'.array_shift($tokens);
-					
-		$library = array_shift($tokens);
-		
 		// load the config for this library
-		// the value for MDS_LIBRARIES_XML is set in index.php
+		// the value for MDS_LIBRARIES_XML is set in client index.php
     	$config = simplexml_load_file(MDS_LIBRARIES_XML);
 		if ( $config ) {
 			$mdsConfig = $config->xpath('//config');
@@ -105,11 +92,12 @@ class MDS {  // is a singleton class
 				$this->_mdsConfig['configFound'] = TRUE;
 			}
 			else $this->_mdsConfig = $this->_defaultMDSconfig;
-			$libraryNode = $config->xpath('//alias[text()="'.$library.'"]/..');
+			if ( MDS_LIBRARY ) $libraryNode = $config->xpath('//alias[text()="'.MDS_LIBRARY.'"]/..');
+			else $libraryNode = FALSE;
 		} 
 		else {
 			$this->_mdsConfig = $this->_defaultMDSconfig;
-			$libraryNode = NULL;
+			$libraryNode = FALSE;
 		}
 		
 		// change allowAddLibrary from yes/no string to boolean
@@ -120,8 +108,8 @@ class MDS {  // is a singleton class
 			$libraryNode = $libraryNode[0];
 			$uri = $libraryNode->xpath('./url');
 			$this->_library = array('uri'=>$uri[0][0]);
-			$this->libraryName = $library;
-			$this->initLibrary($tokens);
+			$this->libraryName = MDS_LIBRARY;
+			$this->initLibrary();
 		}
 		else {
 			$this->_library = FALSE;
@@ -132,12 +120,14 @@ class MDS {  // is a singleton class
 	}  // construct()
 	
 	
-	private function initLibrary($tokens) {
+	private function initLibrary() {
 		
 		$this->_isLibraryFolder = FALSE;
 		$docFolder = NULL;
 		$docName = NULL;		
 		$docTokens = array();
+		
+		$tokens = explode('/',MDS_DOC);
 		
 		// remove empty tokens
 		foreach ( $tokens as $token ) if ( strlen($token) ) $docTokens[] = $token;
@@ -214,7 +204,8 @@ class MDS {  // is a singleton class
 		$suffix = '"/>';
 				
 		if ( preg_match('/^(\/\/|http).*/',$cssUri) ) { /*  do nothing */ }
-		elseif ( $linkOwner == 'mds' )  $cssUri = $this->baseUrl.'/css/'.$cssUri;
+		//elseif ( $linkOwner == 'mds' )  $cssUri = $this->baseUrl.'/css/'.$cssUri;
+		elseif ( $linkOwner == 'mds' )  $cssUri = MDS_SERVER_BASE_URL.'/css/'.$cssUri;
 		elseif ( $linkOwner == 'user' ) $cssUri = $this->_booksetFolder->baseUrl.'/'.$cssUri;
 		
 		// send css to the page
@@ -227,7 +218,8 @@ class MDS {  // is a singleton class
 		$suffix = '"></script>';
 				
 		if ( preg_match('/^(\/\/|http).*/',$jsUri) ) { /*  do nothing */ }
-		elseif ( $linkOwner == 'mds' )  $jsUri = $this->baseUrl.'/js/'.$jsUri;
+		//elseif ( $linkOwner == 'mds' )  $jsUri = $this->baseUrl.'/js/'.$jsUri;
+		elseif ( $linkOwner == 'mds' )  $jsUri = MDS_SERVER_BASE_URL.'/js/'.$jsUri;
 		elseif ( $linkOwner == 'user' ) $jsUri = $this->_booksetFolder->baseUrl.'/'.$jsUri;
 		
 		// send js element to the page

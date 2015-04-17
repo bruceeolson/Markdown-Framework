@@ -1,7 +1,5 @@
 <?php
 
-require_once('mdsCurl.php'); 
-
 class mdsAdmin {
 	
 	public $mdsBaseUrl;
@@ -19,26 +17,12 @@ class mdsAdmin {
 		$this->_lib = new mdsLibraries;
 		
 		$this->_inputs = isset($_POST['Register']) ? $_POST['Register'] : FALSE;
+		$this->mdsBaseUrl = MDS_CLIENT_BASE_URL;  // mds
+		$this->action = MDS_ACTION;
 		
-		$tokens = array();
-		$uritokens = explode('/',$_SERVER['REQUEST_URI']);
-		
-		// remove empty tokens
-		foreach ( $uritokens as $token ) if ( strlen($token) ) $tokens[] = $token;
-		
-		$this->mdsBaseUrl = '/'.array_shift($tokens);  // mds
-				
-		$alias = count($tokens) == 3 ? array_pop($tokens) : FALSE;
-		$action = $this->action = array_pop($tokens);	// create, update, delete
-		
-		if ( in_array($action, array('admin','update','delete')) && !$alias) {
-			$this->action = FALSE;
-			return;
-		}
-		
-		if 		( $action == 'create' ) $this->actionCreate();
-		elseif ( $action == 'update' ) $this->actionUpdate($alias);
-		elseif ( $action == 'delete' ) $this->actionDelete($alias);
+		if 		(MDS_ACTION == 'create' ) $this->actionCreate();
+		elseif ( MDS_ACTION == 'update' ) $this->actionUpdate(MDS_LIBRARY);
+		elseif ( MDS_ACTION == 'delete' ) $this->actionDelete(MDS_LIBRARY);
 	}
 	
 	public static function app() {
