@@ -1,0 +1,9 @@
+RewriteEngine on
+
+# if directory or file doesn't exist, redirect to /mds/index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /mds/index.php [L]
+
+# if no file/directory specified then redirect to /ui/index.php
+DirectoryIndex /mds/index.php

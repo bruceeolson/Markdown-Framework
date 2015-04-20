@@ -13,11 +13,12 @@ The MDS documents framework defines a set of files that can be used to customize
 
 For the purposes of this section let's look at the book-set (shown below) that defines the rendering of the MDS documentation.  It can be found at **/mds/documentation** in the Download package. 
 
-	_config.xml
-	_variables.md
-	_header.md
-	_footer.md
-	_sidebar.md
+	/mds
+		_config.xml
+		_variables.md
+		_header.md
+		_footer.md
+		_sidebar.md
 	addLibrary.md
 	comingSoon.md
 	documentsFramework.md
@@ -27,6 +28,8 @@ For the purposes of this section let's look at the book-set (shown below) that d
 	terms.md
 	style.css
 	main.js
+
+The /mds folder is optional and contains a number of files that define custom rendering.
 
 ## _config.xml  {#config}
 
