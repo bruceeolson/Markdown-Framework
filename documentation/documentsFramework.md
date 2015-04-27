@@ -1,4 +1,4 @@
-# MDS Documents Framework {.mds}
+# Book-set Framework {.mds}
 
 ### Topics
 <div id="ui-toc" markdown="1">
@@ -9,9 +9,9 @@
 * links
 </div>
 
-The MDS documents framework defines a set of files that can be used to customize the rendering of your .md source files.  All of these files are OPTIONAL.  It also describes how links and images in your page are resolved.
+A **book-set** consists of .md files and, optionally, an **/mds** folder.  The /mds folder contains a number of files that customize the rendering of pages for this book-set.   It also defines how links and images in your page are resolved. All of these files are optional.
 
-For the purposes of this section let's look at the book-set (shown below) that defines the rendering of the MDS documentation.  It can be found at **/mds/documentation** in the Download package. 
+Let's look at the book-set (shown below) for the MDS documentation.
 
 	/mds
 		_config.xml
@@ -29,7 +29,6 @@ For the purposes of this section let's look at the book-set (shown below) that d
 	style.css
 	main.js
 
-The /mds folder is optional and contains a number of files that define custom rendering.
 
 ## _config.xml  {#config}
 
@@ -51,13 +50,13 @@ Here is a sample _config.xml file.
 </mdConfig>
 ~~~~
 
-The **defaultDoc** property tells MDS which .md file in the book-set to load when the url references a book-set folder.  The default is **main**.
+The **`<defaultDoc>`** property tells MDS which .md file in the book-set to load when the url references a book-set folder.  The default is **main**.
 
-The **showToolbar** property turns the MDS toolbar at the top of the page on or off.  The default is **yes**.
+The **`<showToolbar>`** property turns the MDS toolbar at the top of the page on or off.  The default is **yes**.
 
-The **css** section tells MDS what CSS files to load.  By default MDS always loads a stylesheet called github.css.  If you don't want that to load then change **includeDefault** to **no**.  Each path to a CSS files is relative to the book-set folder or is an absolute http path.
+The **`<css>`** section tells MDS what CSS files to load.  By default MDS always loads a stylesheet called github.css.  If you don't want that to load then change **includeDefault** to **no**.  Each path to a CSS files is relative to the book-set folder or is an absolute http path.
 
-The **js** section tells MDS what javascript assets to load.  Again, paths are relative to the book-set folder OR can be absolute http paths (e.g. http://js-site.com/js/my.js ).
+The **`<js>`** section tells MDS what javascript assets to load.  Again, paths are relative to the book-set folder OR can be absolute http paths (e.g. http://js-site.com/js/my.js ).
 
 ## _header.md, _footer.md, _sidebar.md (Optional)
 

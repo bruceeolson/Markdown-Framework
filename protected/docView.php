@@ -42,7 +42,7 @@ require_once('docApp.php');
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>
 <script src="http://yandex.st/highlightjs/7.5/highlight.min.js" type="text/javascript"></script>
-<script src="<?php echo MDS_SERVER_BASE_URL;?>/js/uriTransform.js" type="text/javascript"></script>
+<script src="<?php echo MDS_APP_BASE_URL;?>/js/uriTransform.js" type="text/javascript"></script>
 <?php MDS::app()->js(); ?> 
 
 </body>

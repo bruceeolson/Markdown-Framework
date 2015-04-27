@@ -1,50 +1,55 @@
 # Installation {.mds}
 
-The MDS environment consists of an **application** folder and a **client** folder on your web server and distributed library folders.
+The MDS environment consists of the **application**, a **server**, and distributed **libraries**.
 
 ## Default Installation
 
-1. Copy or unzip the **Markdown-Framework** folder under your webroot.  This is the **application** folder.
-1. Copy the **mds-client** directory to **/mds** under your webroot.  This is the **client** folder.
+1. Copy or unzip the **Markdown-Framework** folder under your webroot in a folder named **mds-app**.  This is the **application**.
+1. Copy the **mds** directory to **/mds** under your webroot.  This is the **server**.
 
-You webroot folder should now have these two folders:
+The webroot should now have these two folders:
 
-		/Markdown-Framework
+		/mds-app
 		/mds
 			.htaccess
-			/index.php
-			/config.xml
+			index.php
+			config.xml
 
 That's it!  You are ready to go.  Open /mds in your browser and start [Adding Libraries][addLibrary].
 
 
 ## Custom Installation
 
-If you put the MDS application folder or client folder somewhere other than the defaults recommended above then you will need to modify index.php in the MDS client folder.
+If you put the MDS application folder or server folder somewhere other than the defaults recommended above then you will need to modify index.php in the MDS **server** folder.
 
-	~~~~ .php	
-	// comment out this line if you don't want to see PHP errors
-	if (!ini_get('display_errors')) ini_set('display_errors', 1);
-	
-	define('MDS_CLIENT_BASE_PATH',dirname(__FILE__));
-	define('MDS_CLIENT_BASE_URL','/mds');
-	define('MDS_SERVER_BASE_URL','/Markdown-Framework');
-	require_once('../Markdown-Framework/protected/main.php');
-	~~~~
+### index.php
 
-## config.xml
+~~~~ .php	
+// comment out this line if you don't want to see PHP errors
+if (!ini_get('display_errors')) ini_set('display_errors', 1);
+
+// DO NOT MODIFY
+define('MDS_SERVER_BASE_PATH',dirname(__FILE__));
+define('MDS_SERVER_BASE_URL',preg_replace('/(.+)\/index\.php$/',"$1",$_SERVER['PHP_SELF']));
+														
+// MODIFY these paths if necessary
+define('MDS_APP_BASE_URL','/mds-app');
+require_once('../mds-app/protected/main.php');
+~~~~
 
 You can modify **config.xml** in the MDS client folder, if necessary.
 
-	~~~~ .xml
-	<?xml version="1.0" encoding="UTF-8"?>
-	<libraries>
-		<config>
-			<allowAddLibrary>yes</allowAddLibrary>
-			<title>Markdown Libraries</title>
-		</config>
-	</libraries>
-	~~~~
+### config.xml
+
+~~~~ .xml
+<?xml version="1.0" encoding="UTF-8"?>
+<libraries>
+	<config>
+		<allowAddLibrary>yes</allowAddLibrary>
+		<title>Markdown Libraries</title>
+	</config>
+</libraries>
+~~~~
 	
 	This file maintains the metadata for web-accesible library folders and it gives you a couple of configuration options.  The web application must have write priviledges to this file.
 	

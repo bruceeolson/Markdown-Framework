@@ -17,7 +17,7 @@ class mdsAdmin {
 		$this->_lib = new mdsLibraries;
 		
 		$this->_inputs = isset($_POST['Register']) ? $_POST['Register'] : FALSE;
-		$this->mdsBaseUrl = MDS_CLIENT_BASE_URL;  // mds
+		$this->mdsBaseUrl = MDS_SERVER_BASE_URL;  // mds
 		$this->action = MDS_ACTION;
 		
 		if 		(MDS_ACTION == 'create' ) $this->actionCreate();

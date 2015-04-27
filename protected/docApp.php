@@ -78,7 +78,7 @@ class MDS {  // is a singleton class
 	private function __construct() {
 		
 		$this->basePath = dirname(__FILE__);
-		$this->baseUrl = MDS_CLIENT_BASE_URL;
+		$this->baseUrl = MDS_SERVER_BASE_URL;
 				
 		// load the config for this library
 		// the value for MDS_LIBRARIES_XML is set in client index.php
@@ -205,7 +205,7 @@ class MDS {  // is a singleton class
 				
 		if ( preg_match('/^(\/\/|http).*/',$cssUri) ) { /*  do nothing */ }
 		//elseif ( $linkOwner == 'mds' )  $cssUri = $this->baseUrl.'/css/'.$cssUri;
-		elseif ( $linkOwner == 'mds' )  $cssUri = MDS_SERVER_BASE_URL.'/css/'.$cssUri;
+		elseif ( $linkOwner == 'mds' )  $cssUri = MDS_APP_BASE_URL.'/css/'.$cssUri;
 		elseif ( $linkOwner == 'user' ) $cssUri = $this->_booksetFolder->baseUrl.'/'.$cssUri;
 		
 		// send css to the page
@@ -219,7 +219,7 @@ class MDS {  // is a singleton class
 				
 		if ( preg_match('/^(\/\/|http).*/',$jsUri) ) { /*  do nothing */ }
 		//elseif ( $linkOwner == 'mds' )  $jsUri = $this->baseUrl.'/js/'.$jsUri;
-		elseif ( $linkOwner == 'mds' )  $jsUri = MDS_SERVER_BASE_URL.'/js/'.$jsUri;
+		elseif ( $linkOwner == 'mds' )  $jsUri = MDS_APP_BASE_URL.'/js/'.$jsUri;
 		elseif ( $linkOwner == 'user' ) $jsUri = $this->_booksetFolder->baseUrl.'/'.$jsUri;
 		
 		// send js element to the page
@@ -456,7 +456,11 @@ class mdsFolder {
 	public $mdsLink;
 	
 	public function __construct($url) {
+		$isAbsolute = preg_match('/^(http|file).*/',$url) ? TRUE : FALSE;
+		
+		if ( !$isAbsolute) $url = 'http://'.$_SERVER['HTTP_HOST'].$url;
 		$this->baseUrl = $url;
+		
 		$this->name = basename($url);
 		$folder = new docAsset($url);
 		$this->found = $folder->found;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mdConfig>
 	<defaultDoc>overview</defaultDoc>
-	<showToolbar>yes</showToolbar>
+	<showToolbar>no</showToolbar>
 	<css>
 		<uri>css/style.css</uri>
 	</css>

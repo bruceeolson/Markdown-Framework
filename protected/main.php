@@ -1,15 +1,16 @@
 <?php
 
 define('MDS_VERSION','1.2');
-define('MDS_LIBRARIES_XML',MDS_CLIENT_BASE_PATH.'/config.xml');
+define('MDS_LIBRARIES_XML',MDS_SERVER_BASE_PATH.'/config.xml');
 
-require_once('mdsCurl.php'); 
+require_once('mdsCurl.php');
 
 if ( isset($_SERVER['REDIRECT_URL']) ) {  // url must contain information
-	$tokens = explode('/',$_SERVER['REDIRECT_URL']);
-	$baseUrlTokens = explode('/',MDS_CLIENT_BASE_URL);
-	foreach ( $baseUrlTokens as $token ) array_shift($tokens);  // remove ../mds
-	
+	$mds_dirname = basename(MDS_SERVER_BASE_URL);
+	$request = preg_replace('/.*\/'.$mds_dirname.'\/(.*)/',"$1",$_SERVER['REDIRECT_URL']);	
+	$tokens = explode('/',$request);
+		
+		
 	$token =  array_shift($tokens);  // {library name} | admin
 	
 	if ( $token == 'admin' ) {
