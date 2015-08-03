@@ -1,7 +1,8 @@
 <?php
 
+defined('MDS_DS') || define('MDS_DS',DIRECTORY_SEPARATOR);
 define('MDS_VERSION','1.2');
-define('MDS_LIBRARIES_XML',MDS_SERVER_BASE_PATH.'/config.xml');
+define('MDS_LIBRARIES_XML',MDS_SERVER_BASE_PATH.MDS_DS.'config.xml');
 
 require_once('mdsCurl.php');
 
@@ -9,7 +10,6 @@ if ( isset($_SERVER['REDIRECT_URL']) ) {  // url must contain information
 	$mds_dirname = basename(MDS_SERVER_BASE_URL);
 	$request = preg_replace('/.*\/'.$mds_dirname.'\/(.*)/',"$1",$_SERVER['REDIRECT_URL']);	
 	$tokens = explode('/',$request);
-		
 		
 	$token =  array_shift($tokens);  // {library name} | admin
 	
@@ -29,7 +29,7 @@ if ( isset($_SERVER['REDIRECT_URL']) ) {  // url must contain information
 		require_once('docView.php');
 	}
 }
-else {  // mds home page
+else {  // show mds home page
 	define('MDS_LIBRARY',FALSE);
 	require_once('docView.php');
 }

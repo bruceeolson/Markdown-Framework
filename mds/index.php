@@ -8,5 +8,5 @@ define('MDS_SERVER_BASE_URL',preg_replace('/(.+)\/index\.php$/',"$1",$_SERVER['P
 														
 // MODIFY these paths if necessary
 define('MDS_APP_BASE_URL','/mds-app');
-require_once('../mds-app/protected/main.php');
+require_once(MDS_SERVER_BASE_PATH.'/mds-app/protected/main.php');
 ?>

@@ -81,7 +81,7 @@ class MDS {  // is a singleton class
 		$this->baseUrl = MDS_SERVER_BASE_URL;
 				
 		// load the config for this library
-		// the value for MDS_LIBRARIES_XML is set in client index.php
+		// the value for MDS_LIBRARIES_XML is set in main.php
     	$config = simplexml_load_file(MDS_LIBRARIES_XML);
 		if ( $config ) {
 			$mdsConfig = $config->xpath('//config');
