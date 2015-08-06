@@ -27,6 +27,7 @@ if ( isset($_SERVER['REDIRECT_URL']) ) {  // url must contain information
 		define('MDS_LIBRARY',$token);
 		define('MDS_DOC',implode("/",$tokens));  // folder/document.md | document.md
 		require_once('docView.php');
+		//require_once('test.php');
 	}
 }
 else {  // show mds home page

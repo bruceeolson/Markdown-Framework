@@ -456,7 +456,8 @@ class mdsFolder {
 	public $mdsLink;
 	
 	public function __construct($url) {
-		$isAbsolute = preg_match('/^(http|file).*/',$url) ? TRUE : FALSE;
+		
+		$isAbsolute = preg_match('/^(http|file)/',$url) ? TRUE : FALSE;
 		
 		if ( !$isAbsolute) $url = 'http://'.$_SERVER['HTTP_HOST'].$url;
 		$this->baseUrl = $url;
