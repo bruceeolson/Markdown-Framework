@@ -1,3 +1,10 @@
 RewriteEngine on
 
 Options +Indexes
+
+DirectoryIndex disabled
+
+# if the directory or file doesn't exist, send a 306
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . - [R=306,L]
